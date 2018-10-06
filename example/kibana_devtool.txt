@@ -1,0 +1,155 @@
+// example in kibana
+
+PUT nutch/doc/1
+{
+  "content":"日本の東京都渋谷区ハチ公前 ﾊﾁｺｳﾏｴ Shibuya Tokyo"
+  "date": "2018-10-06T16:55:40+0000",
+  "tstamp": "2018-10-13T05:39:58+0000"
+}
+
+// check settings
+GET nutch
+GET nutch/_mapping
+GET nutch/_mapping/doc
+
+// search
+GET nutch/doc/_search
+{
+  "explain": true,
+   "query":{
+      "query_string":{
+         "query": "東京"
+      }
+   }
+}
+
+GET nutch/doc/_search
+{
+  "explain": true,
+   "query":{
+      "query_string":{
+         "query": "ハチ"
+      }
+   }
+}
+
+GET nutch/doc/_search
+{
+  "explain": true,
+     "query":{
+      "wildcard":{
+         "content": "*ﾁｺ*"
+      }
+   }
+}
+
+// test analyze
+GET nutch/_analyze
+{
+  "field": "contnent",
+  "text": "日本の東京都渋谷区ハチ公前 ﾊﾁｺｳﾏｴ Shibuya Tokyo"
+}
+
+GET nutch/_analyze
+{
+  "tokenizer": "morpheme_ja_tokenizer",
+  "text": "日本の東京都渋谷区ハチ公前 ﾊﾁｺｳﾏｴ Shibuya Tokyo"
+}
+
+GET nutch/_analyze
+{
+  "tokenizer": "morpheme_ja_tokenizer",
+  "text": "ハチコウ"
+}
+
+GET nutch/_analyze
+{
+  "analyzer": "ja_ngram_analyzer",
+  "text": "日本の東京都渋谷区ハチ公前 ﾊﾁｺｳﾏｴ Shibuya Tokyo"
+}
+
+GET _analyze
+{
+  "tokenizer": "standard",
+  "filter":  [ "ja_stop" ],
+  "text": "日本の東京都渋谷区ハチ公前 ﾊﾁｺｳﾏｴ Shibuya Tokyo"
+}
+
+// manage index
+DELETE nutch
+
+POST nutch/_close
+POST nutch/_open
+
+// nutch initial
+// content support ngram and char filter
+// basic all search is not analyzed(use wildcard for partial matching)
+PUT nutch
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "content": {
+          "type": "text",
+          "analyzer": "ja_ngram_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "analysis": {
+        "analyzer": {
+          "ja_morpheme_analyzer": {
+            "filter": [
+              "kuromoji_baseform",
+              "kuromoji_part_of_speech",
+              "ja_stop",
+              "kuromoji_number",
+              "kuromoji_stemmer"
+            ],
+            "char_filter": [
+              "icu_normalizer",
+              "kuromoji_iteration_mark"
+            ],
+            "tokenizer": "morpheme_ja_tokenizer",
+            "type": "custom"
+          },
+          "ja_ngram_analyzer": {
+            "char_filter": [
+              "icu_normalizer",
+              "kuromoji_iteration_mark"
+            ],
+            "filter": [
+              "ja_stop",
+              "kuromoji_stemmer"
+            ],
+            "tokenizer": "ngram_ja_tokenizer",
+            "type": "custom"
+          }
+        },
+        "tokenizer": {
+          "morpheme_ja_tokenizer": {
+            "mode": "search",
+            "type": "kuromoji_tokenizer"
+          },
+          "ngram_ja_tokenizer": {
+            "token_chars": [
+              "digit",
+              "letter"
+            ],
+            "max_gram": "3",
+            "min_gram": "2",
+            "type": "nGram"
+          }
+        }
+      }
+    }
+  }
+}

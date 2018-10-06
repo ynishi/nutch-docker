@@ -1,0 +1,69 @@
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "content": {
+          "type": "text",
+          "analyzer": "ja_ngram_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "analysis": {
+        "analyzer": {
+          "ja_morpheme_analyzer": {
+            "filter": [
+              "kuromoji_baseform",
+              "kuromoji_part_of_speech",
+              "ja_stop",
+              "kuromoji_number",
+              "kuromoji_stemmer"
+            ],
+            "char_filter": [
+              "icu_normalizer",
+              "kuromoji_iteration_mark"
+            ],
+            "tokenizer": "morpheme_ja_tokenizer",
+            "type": "custom"
+          },
+          "ja_ngram_analyzer": {
+            "char_filter": [
+              "icu_normalizer",
+              "kuromoji_iteration_mark"
+            ],
+            "filter": [
+              "ja_stop",
+              "kuromoji_stemmer"
+            ],
+            "tokenizer": "ngram_ja_tokenizer",
+            "type": "custom"
+          }
+        },
+        "tokenizer": {
+          "morpheme_ja_tokenizer": {
+            "mode": "search",
+            "type": "kuromoji_tokenizer"
+          },
+          "ngram_ja_tokenizer": {
+            "token_chars": [
+              "digit",
+              "letter"
+            ],
+            "max_gram": "3",
+            "min_gram": "2",
+            "type": "nGram"
+          }
+        }
+      }
+    }
+  }
+}
+
